@@ -12,4 +12,4 @@ jobs:
       - name: Checkout Terraform Repo
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/Ayon2016/TSC_Terraform_POC
+          repository: Ayon2016/TSC_Terraform_POC
