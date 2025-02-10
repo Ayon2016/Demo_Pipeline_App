@@ -1,0 +1,15 @@
+name: Run Performance test on merge
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Terraform Repo
+        uses: actions/checkout@v4
+        with:
+          repository: https://github.com/Ayon2016/TSC_Terraform_POC
