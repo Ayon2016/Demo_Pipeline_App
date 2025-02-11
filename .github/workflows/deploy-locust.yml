@@ -1,7 +1,7 @@
 name: Run Performance test on merge
 
 on:
-  push:
+  push: # change to pull_request
     branches:
       - main
 
@@ -32,3 +32,47 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+
+      - name: Get EC2 Public IPs
+        run: |
+          echo "LOCUST_MASTER_IP=$(terraform output -raw locust_master_public_ip)" >> $GITHUB_ENV
+          echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_ip)" >> $GITHUB_ENV
+
+  setup-locust:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Locust Master
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ env.LOCUST_MASTER_IP }}
+          username: bitnami # or ec2-user for Amazon Linux
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            sudo apt update -y
+            sudo apt install -y python3-pip
+            pip3 install locust
+            git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+            cd locust_test_framework
+            nohup locust -f locustfile.py --master
+
+  cleanup:
+    needs: setup-locust
+    runs-on: ubuntu-latest
+    if: always() # Ensures Terraform destroy runs even if previous steps fail
+
+    steps:
+      - name: Checkout Terraform Repo
+        uses: actions/checkout@v3
+        with:
+          repository: YOUR_GITHUB_ORG/TerraformRepo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
