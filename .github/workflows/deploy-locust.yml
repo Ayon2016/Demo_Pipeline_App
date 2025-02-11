@@ -22,6 +22,11 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Set Environment Variables for Terraform
+        run: |
+          echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+
       - name: Terraform Plan
         run: terraform plan
 
