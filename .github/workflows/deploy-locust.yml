@@ -55,7 +55,7 @@ jobs:
             pip3 install locust
             git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
             cd locust_test_framework
-            nohup locust -f locustfile.py --master
+            nohup locust -f api_test.py --master
 
   cleanup:
     needs: setup-locust
@@ -63,6 +63,11 @@ jobs:
     if: always() # Ensures Terraform destroy runs even if previous steps fail
 
     steps:
+      - name: Set Environment Variables for Terraform
+        run: |
+          echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+
       - name: Checkout Terraform Repo
         uses: actions/checkout@v3
         with:
@@ -73,6 +78,9 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Terraform Plan Destroy
+        run: TF_LOG=DEBUG terraform plan -destroy
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
