@@ -39,6 +39,7 @@ jobs:
           echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_ip)" >> $GITHUB_ENV
 
   setup-locust:
+    needs: deploy-infra
     runs-on: ubuntu-latest
 
     steps:
@@ -65,8 +66,7 @@ jobs:
       - name: Checkout Terraform Repo
         uses: actions/checkout@v3
         with:
-          repository: YOUR_GITHUB_ORG/TerraformRepo
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: Ayon2016/TSC_Terraform_POC
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
