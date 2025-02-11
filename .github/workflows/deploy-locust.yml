@@ -6,10 +6,19 @@ on:
       - main
 
 jobs:
-  deploy:
+  deploy-infra:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout Terraform Repo
         uses: actions/checkout@v4
         with:
           repository: Ayon2016/TSC_Terraform_POC
+      - name: Terraform Init
+        run: terraform init
+      - name: Terraform Plan
+        run: terraform plan
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
