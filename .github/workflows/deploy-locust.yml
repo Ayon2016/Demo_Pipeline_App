@@ -13,7 +13,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     outputs:
       LOCUST_MASTER_IP: ${{ steps.save-ip.outputs.LOCUST_MASTER_IP }}
-      LOCUST_WORKER_IP: ${{ steps.save-ip.outputs.LOCUST_WORKER_IP }
+      LOCUST_WORKER_IP: ${{ steps.save-ip.outputs.LOCUST_WORKER_IP }}
     steps:
       - name: Checkout Terraform Repo
         uses: actions/checkout@v4
