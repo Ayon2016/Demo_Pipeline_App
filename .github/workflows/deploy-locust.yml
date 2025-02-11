@@ -16,9 +16,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Ayon2016/TSC_Terraform_POC
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
       - name: Terraform Init
         run: terraform init
+
       - name: Terraform Plan
         run: terraform plan
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
