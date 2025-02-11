@@ -11,6 +11,9 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    outputs:
+      LOCUST_MASTER_IP: ${{ steps.save-ip.outputs.LOCUST_MASTER_IP }}
+      LOCUST_WORKER_IP: ${{ steps.save-ip.outputs.LOCUST_WORKER_IP }
     steps:
       - name: Checkout Terraform Repo
         uses: actions/checkout@v4
@@ -33,10 +36,11 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Get EC2 Public IPs
+      - name: Get EC2 Public IP
+        id: save-ip
         run: |
-          echo "LOCUST_MASTER_IP=$(terraform output -raw locust_master_public_ip)" >> $GITHUB_ENV
-          echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_ip)" >> $GITHUB_ENV
+          echo "LOCUST_MASTER_IP=$(terraform output -raw locust_master_public_ip | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_i | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
 
   setup-locust:
     needs: deploy-infra
@@ -46,7 +50,7 @@ jobs:
       - name: Deploy Locust Master
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{ env.LOCUST_MASTER_IP }}
+          host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
           username: bitnami # or ec2-user for Amazon Linux
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
@@ -60,6 +64,9 @@ jobs:
   cleanup:
     needs: setup-locust
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     if: always() # Ensures Terraform destroy runs even if previous steps fail
 
     steps:
