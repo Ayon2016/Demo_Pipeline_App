@@ -41,7 +41,7 @@ jobs:
         id: ip
         run: |
           terraform output -json locust_master_public_ip >> output.json
-          locust_master_ip = $(cat output.json)
+          locust_master_ip=$(cat output.json)
           echo "The ip is:$locust_master_ip"
           echo "LOCUST_MASTER_IP=$locust_master_ip" >> $GITHUB_OUTPUT
 
