@@ -31,7 +31,8 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan with Debugging
-        run: TF_LOG=INFO terraform plan -input=false
+        # run: TF_LOG=INFO terraform plan -input=false
+        run: terraform plan
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
@@ -39,8 +40,8 @@ jobs:
       - name: Get EC2 Public IP
         id: save-ip
         run: |
-          echo "LOCUST_MASTER_IP is: $(terraform output -raw locust_master_public_ip 2>/dev/null | tr -d '\r' | tr -d '\n')"
-          echo "LOCUST_MASTER_IP=$(terraform output -raw locust_master_public_ip 2>/dev/null | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "LOCUST_MASTER_IP is: $(terraform output -json locust_master_public_ip)"
+          echo "LOCUST_MASTER_IP=$(terraform output -json)" >> $GITHUB_OUTPUT
           echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_i 2>/dev/null | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
 
   setup-locust:
@@ -91,7 +92,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan Destroy
-        run: TF_LOG=INFO terraform plan -destroy
+        run: terraform plan -destroy
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
