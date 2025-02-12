@@ -20,7 +20,9 @@ jobs:
         with:
           repository: Ayon2016/TSC_Terraform_POC
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
       - name: Set Environment Variables for Terraform
         run: |
@@ -39,11 +41,7 @@ jobs:
 
       - name: Get EC2 Public IP
         id: ip
-        run: |
-          terraform output -json locust_master_public_ip >> output.json
-          locust_master_ip=$(cat output.json)
-          echo "The ip is:$locust_master_ip"
-          echo "LOCUST_MASTER_IP=$locust_master_ip" >> $GITHUB_OUTPUT
+        run: echo "LOCUST_MASTER_IP=$(terraform output locust_master_ip)" >>$GITHUB_ENV
 
   setup-locust:
     needs: deploy-infra
