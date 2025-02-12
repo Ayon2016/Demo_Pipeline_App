@@ -39,9 +39,9 @@ jobs:
       - name: Get EC2 Public IP
         id: save-ip
         run: |
-          echo "LOCUST_MASTER_IP is: $(terraform output -raw locust_master_public_ip | tr -d '\r' | tr -d '\n')"
-          echo "LOCUST_MASTER_IP=$(terraform output -raw locust_master_public_ip | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
-          echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_i | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "LOCUST_MASTER_IP is: $(terraform output -raw locust_master_public_ip 2>/dev/null | tr -d '\r' | tr -d '\n')"
+          echo "LOCUST_MASTER_IP=$(terraform output -raw locust_master_public_ip 2>/dev/null | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_i 2>/dev/null | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
 
   setup-locust:
     needs: deploy-infra
@@ -49,6 +49,8 @@ jobs:
 
     steps:
       - name: Deploy Locust Master
+        run: |
+          echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
