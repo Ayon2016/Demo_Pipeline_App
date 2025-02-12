@@ -43,7 +43,7 @@ jobs:
         id: ip
         run: |
           echo "The public IP is $(terraform output locust_master_public_ip)"
-          echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip)">>$GITHUB_OUTPUT
+          echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
 
   setup-locust:
     needs: deploy-infra
