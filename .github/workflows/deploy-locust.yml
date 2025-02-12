@@ -12,8 +12,8 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     outputs:
-      LOCUST_MASTER_IP: ${{ steps.save-ip.outputs.LOCUST_MASTER_IP }}
-      LOCUST_WORKER_IP: ${{ steps.save-ip.outputs.LOCUST_WORKER_IP }}
+      LOCUST_MASTER_IP: ${{ steps.ip.outputs.LOCUST_MASTER_IP }}
+      LOCUST_WORKER_IP: ${{ steps.ip.outputs.LOCUST_WORKER_IP }}
     steps:
       - name: Checkout Terraform Repo
         uses: actions/checkout@v4
@@ -38,10 +38,12 @@ jobs:
         run: terraform apply -auto-approve
 
       - name: Get EC2 Public IP
-        id: save-ip
+        id: ip
         run: |
           terraform output -json locust_master_public_ip >> output.json
-          cat output.json
+          locust_master_ip = $(cat output.json)
+          echo "The ip is:$locust_master_ip"
+          echo "LOCUST_MASTER_IP=$locust_master_ip" >> $GITHUB_OUTPUT
 
   setup-locust:
     needs: deploy-infra
@@ -65,33 +67,33 @@ jobs:
             cd locust_test_framework
             nohup locust -f api_test.py --master
 
-  cleanup:
-    needs: setup-locust
-    runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    if: always() # Ensures Terraform destroy runs even if previous steps fail
+  # cleanup:
+  #   needs: setup-locust
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #   if: always() # Ensures Terraform destroy runs even if previous steps fail
 
-    steps:
-      - name: Set Environment Variables for Terraform
-        run: |
-          echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+  #   steps:
+  #     - name: Set Environment Variables for Terraform
+  #       run: |
+  #         echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+  #         echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
 
-      - name: Checkout Terraform Repo
-        uses: actions/checkout@v3
-        with:
-          repository: Ayon2016/TSC_Terraform_POC
+  #     - name: Checkout Terraform Repo
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: Ayon2016/TSC_Terraform_POC
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+  #     - name: Install Terraform
+  #       uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform Init
-        run: terraform init
+  #     - name: Terraform Init
+  #       run: terraform init
 
-      - name: Terraform Plan Destroy
-        run: terraform plan -destroy
+  #     - name: Terraform Plan Destroy
+  #       run: terraform plan -destroy
 
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+  #     - name: Terraform Destroy
+  #       run: terraform destroy -auto-approve
