@@ -41,7 +41,7 @@ jobs:
 
       - name: Get EC2 Public IP
         id: ip
-        run: echo "LOCUST_MASTER_IP=$(terraform output locust_master_ip)" >>$GITHUB_ENV
+        run: echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip)">>$GITHUB_ENV
 
   setup-locust:
     needs: deploy-infra
