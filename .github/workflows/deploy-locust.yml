@@ -44,6 +44,7 @@ jobs:
         run: |
           echo "The public IP is $(terraform output locust_master_public_ip)"
           echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
+          echo "LOCUST_WORKER_IP=$(terraform output locust_worker_public_ip | tr -d '"')">>$GITHUB_OUTPUT
 
   setup-locust:
     needs: deploy-infra
@@ -60,12 +61,27 @@ jobs:
           username: bitnami # or ec2-user for Amazon Linux
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
+            sudo su
             sudo apt update -y
-            sudo apt install -y python3-pip
-            pip3 install locust
+            sudo apt install -y python3-pip git
+            sudo apt install python3-locust
             git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-            cd locust_test_framework
+            cd ~/locust_test_framework/
             nohup locust -f api_test.py --master
+
+      - name: Deploy Locust Worker
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
+          username: bitnami # or ec2-user for Amazon Linux
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            sudo apt update -y
+            sudo apt install -y python3-pip git
+            sudo apt install python3-locust
+            git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+            cd ~/locust_test_framework/
+            nohup locust -f api_test.py --worker
 
   # cleanup:
   #   needs: setup-locust
