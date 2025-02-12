@@ -48,9 +48,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy Locust Master
+      - name: Get Public IPs
         run: |
           echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
+      - name: Deploy Locust Master
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
