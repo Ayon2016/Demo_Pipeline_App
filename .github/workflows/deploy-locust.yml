@@ -40,8 +40,8 @@ jobs:
       - name: Get EC2 Public IP
         id: save-ip
         run: |
-          locust_master_ip=$(terraform output -json locust_master_public_ip | sed -n 's/^.*"\(.*\)".*$/\1/p')
-          echo "Locust Master Public Ip is:$locust_master_ip"
+          terraform output -json locust_master_public_ip >> output.json
+          cat output.json
 
   setup-locust:
     needs: deploy-infra
