@@ -42,7 +42,6 @@ jobs:
         run: |
           locust_master_ip=$(terraform output -json locust_master_public_ip | sed -n 's/^.*"\(.*\)".*$/\1/p')
           echo "LOCUST_MASTER_IP=$locust_master_ip" >> $GITHUB_OUTPUT
-          echo "LOCUST_WORKER_IP=$(terraform output -raw locust_worker_public_i 2>/dev/null | tr -d '\r' | tr -d '\n')" >> $GITHUB_OUTPUT
 
   setup-locust:
     needs: deploy-infra
