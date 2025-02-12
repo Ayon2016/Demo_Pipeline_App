@@ -31,7 +31,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan with Debugging
-        run: TF_LOG=DEBUG terraform plan -input=false
+        run: TF_LOG=INFO terraform plan -input=false
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
@@ -87,7 +87,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan Destroy
-        run: TF_LOG=DEBUG terraform plan -destroy
+        run: TF_LOG=INFO terraform plan -destroy
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
