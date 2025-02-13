@@ -73,7 +73,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
-          username: bitnami # or ec2-user for Amazon Linux
+          username: bitnami
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             sudo apt update -y
