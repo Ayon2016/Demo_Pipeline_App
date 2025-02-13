@@ -64,10 +64,10 @@ jobs:
             sudo su
             sudo apt update -y
             sudo apt install -y python3-pip git
-            sudo apt install python3-locust
+            sudo apt install -y python3-locust
             git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
             cd ~/locust_test_framework/
-            nohup locust -f api_test.py --master
+            nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
 
       - name: Deploy Locust Worker
         uses: appleboy/ssh-action@v0.1.7
@@ -78,10 +78,11 @@ jobs:
           script: |
             sudo apt update -y
             sudo apt install -y python3-pip git
-            sudo apt install python3-locust
+            sudo apt install -y python3-locust
+            export locust_master_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
             git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
             cd ~/locust_test_framework/
-            nohup locust -f api_test.py --worker
+            nohup locust -f api_test.py --worker --master-host $locust_master_ip
 
   # cleanup:
   #   needs: setup-locust
