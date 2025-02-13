@@ -46,59 +46,62 @@ jobs:
           echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
           echo "LOCUST_WORKER_IP=$(terraform output locust_worker_public_ip | tr -d '"')">>$GITHUB_OUTPUT
 
-  setup-locust-master:
-    needs: deploy-infra
-    runs-on: ubuntu-latest
+  # setup-locust-master:
+  #   needs: deploy-infra
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get master public ip
-        run: |
-          echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
-      - name: Deploy Locust Master
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
-          username: bitnami # or ec2-user for Amazon Linux
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            sudo su
-            sudo apt update -y
-            sudo apt install -y python3-pip git
-            sudo apt install -y python3-locust
-            git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-            cd ~/locust_test_framework/
-            nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
+  #   steps:
+  #     - name: Get master public ip
+  #       run: |
+  #         echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
+  #     - name: Deploy Locust Master
+  #       uses: appleboy/ssh-action@v0.1.7
+  #       with:
+  #         host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
+  #         username: bitnami # or ec2-user for Amazon Linux
+  #         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  #         script: |
+  #           sudo su
+  #           sudo apt update -y
+  #           sudo apt install -y python3-pip git
+  #           sudo apt install -y python3-locust
+  #           sudo iptables -A INPUT -p tcp --dport 5557 -j ACCEPT
+  #           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+  #           cd ~/locust_test_framework/
+  #           nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
+  #           aws s3 cp ./reports s3://tsc-locust-reports --recursive --sse AES256
 
-  setup-locust-worker:
-    needs: deploy-infra
-    runs-on: ubuntu-latest
+  # setup-locust-worker:
+  #   needs: deploy-infra
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Get worker public ip
-        run: |
-          echo "Locust Worker Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}"
-      - name: Deploy Locust Worker
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
-          username: bitnami
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            sudo apt update -y
-            sudo apt install -y python3-pip git
-            sudo apt install -y python3-locust
-            export locust_master_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
-            git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-            cd ~/locust_test_framework/
-            for i in {1..10}; do
-              if curl --silent --fail http://$locust_master_ip:8089; then
-                echo "Locust Master is up!"
-                break
-              fi
-              echo "Waiting for Locust Master to be available..."
-              sleep 5
-            done
-            nohup locust -f api_test.py --worker --master-host $locust_master_ip
+  #   steps:
+  #     - name: Get worker public ip
+  #       run: |
+  #         echo "Locust Worker Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}"
+  #     - name: Deploy Locust Worker
+  #       uses: appleboy/ssh-action@v0.1.7
+  #       with:
+  #         host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
+  #         username: bitnami
+  #         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  #         script: |
+  #           sudo apt update -y
+  #           sudo apt install -y python3-pip git
+  #           sudo apt install -y python3-locust
+  #           ulimit -n 100000
+  #           export locust_master_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
+  #           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+  #           cd ~/locust_test_framework/
+  #           for i in {1..10}; do
+  #             if curl --silent --fail http://$locust_master_ip:8089; then
+  #               echo "Locust Master is up!"
+  #               break
+  #             fi
+  #             echo "Waiting for Locust Master to be available..."
+  #             sleep 5
+  #           done
+  #           nohup locust -f api_test.py --worker --master-host $locust_master_ip
 
   # cleanup:
   #   needs: setup-locust-worker
