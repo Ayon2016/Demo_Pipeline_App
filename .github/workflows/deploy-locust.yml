@@ -6,111 +6,127 @@ on:
       - main
 
 jobs:
-  deploy-infra:
-    runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    outputs:
-      LOCUST_MASTER_IP: ${{ steps.ip.outputs.LOCUST_MASTER_IP }}
-      LOCUST_WORKER_IP: ${{ steps.ip.outputs.LOCUST_WORKER_IP }}
-    steps:
-      - name: Checkout Terraform Repo
-        uses: actions/checkout@v4
-        with:
-          repository: Ayon2016/TSC_Terraform_POC
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
-
-      - name: Set Environment Variables for Terraform
-        run: |
-          echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan with Debugging
-        # run: TF_LOG=INFO terraform plan -input=false
-        run: terraform plan
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-
-      - name: Get EC2 Public IP
-        id: ip
-        run: |
-          echo "The public IP is $(terraform output locust_master_public_ip)"
-          echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
-          echo "LOCUST_WORKER_IP=$(terraform output locust_worker_public_ip | tr -d '"')">>$GITHUB_OUTPUT
-
-  setup-locust:
-    needs: deploy-infra
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Get Public IPs
-        run: |
-          echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
-      - name: Deploy Locust Master
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
-          username: bitnami # or ec2-user for Amazon Linux
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            sudo su
-            sudo apt update -y
-            sudo apt install -y python3-pip git
-            sudo apt install -y python3-locust
-            git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-            cd ~/locust_test_framework/
-            nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
-
-      - name: Deploy Locust Worker
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
-          username: bitnami
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            sudo apt update -y
-            sudo apt install -y python3-pip git
-            sudo apt install -y python3-locust
-            export locust_master_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
-            git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-            cd ~/locust_test_framework/
-            nohup locust -f api_test.py --worker --master-host $locust_master_ip
-
-  # cleanup:
-  #   needs: setup-locust
+  # deploy-infra:
   #   runs-on: ubuntu-latest
   #   env:
   #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #   if: always() # Ensures Terraform destroy runs even if previous steps fail
-
+  #   outputs:
+  #     LOCUST_MASTER_IP: ${{ steps.ip.outputs.LOCUST_MASTER_IP }}
+  #     LOCUST_WORKER_IP: ${{ steps.ip.outputs.LOCUST_WORKER_IP }}
   #   steps:
+  #     - name: Checkout Terraform Repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: Ayon2016/TSC_Terraform_POC
+  #     - name: Install Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_wrapper: false
+
   #     - name: Set Environment Variables for Terraform
   #       run: |
   #         echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
   #         echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
 
-  #     - name: Checkout Terraform Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: Ayon2016/TSC_Terraform_POC
-
-  #     - name: Install Terraform
-  #       uses: hashicorp/setup-terraform@v2
-
   #     - name: Terraform Init
   #       run: terraform init
 
-  #     - name: Terraform Plan Destroy
-  #       run: terraform plan -destroy
+  #     - name: Terraform Plan with Debugging
+  #       # run: TF_LOG=INFO terraform plan -input=false
+  #       run: terraform plan
 
-  #     - name: Terraform Destroy
-  #       run: terraform destroy -auto-approve
+  #     - name: Terraform Apply
+  #       run: terraform apply -auto-approve
+
+  #     - name: Get EC2 Public IP
+  #       id: ip
+  #       run: |
+  #         echo "The public IP is $(terraform output locust_master_public_ip)"
+  #         echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
+  #         echo "LOCUST_WORKER_IP=$(terraform output locust_worker_public_ip | tr -d '"')">>$GITHUB_OUTPUT
+
+  # setup-locust-master:
+  #   needs: deploy-infra
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Get master public ip
+  #       run: |
+  #         echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
+  #     - name: Deploy Locust Master
+  #       uses: appleboy/ssh-action@v0.1.7
+  #       with:
+  #         host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
+  #         username: bitnami # or ec2-user for Amazon Linux
+  #         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  #         script: |
+  #           sudo su
+  #           sudo apt update -y
+  #           sudo apt install -y python3-pip git
+  #           sudo apt install -y python3-locust
+  #           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+  #           cd ~/locust_test_framework/
+  #           nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
+
+  # setup-locust-worker:
+  #   needs: deploy-infra
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Get worker public ip
+  #       run: |
+  #         echo "Locust Worker Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}"
+  #     - name: Deploy Locust Worker
+  #       uses: appleboy/ssh-action@v0.1.7
+  #       with:
+  #         host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
+  #         username: bitnami
+  #         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  #         script: |
+  #           sudo apt update -y
+  #           sudo apt install -y python3-pip git
+  #           sudo apt install -y python3-locust
+  #           export locust_master_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
+  #           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+  #           cd ~/locust_test_framework/
+  #           for i in {1..10}; do
+  #             if curl --silent --fail http://$locust_master_ip:8089; then
+  #               echo "Locust Master is up!"
+  #               break
+  #             fi
+  #             echo "Waiting for Locust Master to be available..."
+  #             sleep 5
+  #           done
+  #           nohup locust -f api_test.py --worker --master-host $locust_master_ip
+
+  cleanup:
+    needs: setup-locust
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    if: always() # Ensures Terraform destroy runs even if previous steps fail
+
+    steps:
+      - name: Set Environment Variables for Terraform
+        run: |
+          echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+
+      - name: Checkout Terraform Repo
+        uses: actions/checkout@v3
+        with:
+          repository: Ayon2016/TSC_Terraform_POC
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
