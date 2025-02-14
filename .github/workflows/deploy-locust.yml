@@ -107,33 +107,33 @@ jobs:
             done
             nohup locust -f api_test.py --worker --master-host $locust_master_private_ip
 
-  # cleanup:
-  #   needs: setup-locust-worker
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #   if: always() # Ensures Terraform destroy runs even if previous steps fail
+  cleanup:
+    needs: setup-locust-worker
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    if: always() # Ensures Terraform destroy runs even if previous steps fail
 
-  #   steps:
-  #     - name: Set Environment Variables for Terraform
-  #       run: |
-  #         echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-  #         echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+    steps:
+      - name: Set Environment Variables for Terraform
+        run: |
+          echo "TF_VAR_aws_access_key=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
 
-  #     - name: Checkout Terraform Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: Ayon2016/TSC_Terraform_POC
+      - name: Checkout Terraform Repo
+        uses: actions/checkout@v3
+        with:
+          repository: Ayon2016/TSC_Terraform_POC
 
-  #     - name: Install Terraform
-  #       uses: hashicorp/setup-terraform@v2
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
 
-  #     - name: Terraform Init
-  #       run: terraform init
+      - name: Terraform Init
+        run: terraform init
 
-  #     - name: Terraform Plan Destroy
-  #       run: terraform plan -destroy
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy
 
-  #     - name: Terraform Destroy
-  #       run: terraform destroy -auto-approve
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
