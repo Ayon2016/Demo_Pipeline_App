@@ -72,7 +72,7 @@ jobs:
             git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
             cd ~/locust_test_framework/
             nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
-            aws s3 cp ./reports s3://tsc-locust-reports-test --recursive --sse AES256
+            aws s3 cp ./reports s3://tsc-locust-reports --recursive --sse AES256
 
   setup-locust-worker:
     needs: deploy-infra
