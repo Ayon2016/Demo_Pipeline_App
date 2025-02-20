@@ -16,6 +16,10 @@ jobs:
       LOCUST_WORKER_IP: ${{ steps.ip.outputs.LOCUST_WORKER_IP }}
       LOCUST_MASTER_PRIVATE_IP: ${{ steps.ip.outputs.LOCUST_MASTER_PRIVATE_IP }}
     steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Checkout Terraform Repo
         uses: actions/checkout@v4
         with:
