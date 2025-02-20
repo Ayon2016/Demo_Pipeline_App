@@ -118,7 +118,7 @@ jobs:
   #           nohup locust -f api_test.py --worker --master-host $locust_master_private_ip
 
   cleanup:
-    needs: setup-locust-worker
+    # needs: setup-locust-worker
     runs-on: ubuntu-latest
     env:
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
