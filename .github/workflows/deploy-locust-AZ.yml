@@ -1,7 +1,7 @@
-# on:
-#   push: # change to pull_request
-#     branches:
-#       - main
+on:
+  push: # change to pull_request
+    branches:
+      - main
 
 # jobs:
 #   deploy-infra:
