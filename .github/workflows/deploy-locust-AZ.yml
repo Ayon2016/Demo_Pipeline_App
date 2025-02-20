@@ -71,7 +71,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
-          username: bitnami # or ec2-user for Amazon Linux
+          username: azureuser
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             sudo su
@@ -96,7 +96,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
-          username: bitnami
+          username: azureuser
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             sudo apt update -y
@@ -118,7 +118,7 @@ jobs:
             nohup locust -f api_test.py --worker --master-host $locust_master_private_ip
 
   cleanup:
-    # needs: setup-locust-worker
+    needs: setup-locust-worker
     runs-on: ubuntu-latest
     env:
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
