@@ -3,7 +3,7 @@ on:
     branches:
       - main
 
-# jobs:
+jobs:
 #   deploy-infra:
 #     runs-on: ubuntu-latest
 #     env:
