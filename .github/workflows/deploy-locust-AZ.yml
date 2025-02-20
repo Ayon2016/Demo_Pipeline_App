@@ -1,153 +1,158 @@
-on:
-  push: # change to pull_request
-    branches:
-      - main
+# on:
+#   push: # change to pull_request
+#     branches:
+#       - main
 
-jobs:
-  deploy-infra:
-    runs-on: ubuntu-latest
-    env:
-      # Terraform Authentication (Service Principal)
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
-      ARM_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
-      ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
+# jobs:
+#   deploy-infra:
+#     runs-on: ubuntu-latest
+#     env:
+#       # Terraform Authentication (Service Principal)
+#       ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
+#       ARM_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
+#       ARM_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
+#       ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
 
-    outputs:
-      LOCUST_MASTER_IP: ${{ steps.ip.outputs.LOCUST_MASTER_IP }}
-      LOCUST_WORKER_IP: ${{ steps.ip.outputs.LOCUST_WORKER_IP }}
-      LOCUST_MASTER_PRIVATE_IP: ${{ steps.ip.outputs.LOCUST_MASTER_PRIVATE_IP }}
+#     outputs:
+#       LOCUST_MASTER_IP: ${{ steps.ip.outputs.LOCUST_MASTER_IP }}
+#       LOCUST_WORKER_IP: ${{ steps.ip.outputs.LOCUST_WORKER_IP }}
+#       LOCUST_MASTER_PRIVATE_IP: ${{ steps.ip.outputs.LOCUST_MASTER_PRIVATE_IP }}
 
-    steps:
-      # - name: Login to Azure
-      #   uses: azure/login@v1
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+#     steps:
+#       - name: Login to Azure
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Checkout Terraform Repo
-        uses: actions/checkout@v4
-        with:
-          repository: Ayon2016/Tfcode_TSC_POC_AZ
+#       - name: Checkout Terraform Repo
+#         uses: actions/checkout@v4
+#         with:
+#           repository: Ayon2016/Tfcode_TSC_POC_AZ
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
+#       - name: Install Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_wrapper: false
 
-      - name: Set Environment Variables for Terraform
-        run: |
-          echo "TF_VAR_subscription_id=${{ secrets.AZ_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-          echo "TF_VAR_aws_client_id=${{ secrets.AZ_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "TF_VAR_client_secret=${{ secrets.AZ_CLIENT_SECRET }}" >> $GITHUB_ENV
-          echo "TF_VAR_tenant_id=${{ secrets.AZ_TENANT_ID }}" >> $GITHUB_ENV
+#       - name: Set Environment Variables for Terraform
+#         run: |
+#           echo "TF_VAR_subscription_id=${{ secrets.AZ_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+#           echo "TF_VAR_aws_client_id=${{ secrets.AZ_CLIENT_ID }}" >> $GITHUB_ENV
+#           echo "TF_VAR_client_secret=${{ secrets.AZ_CLIENT_SECRET }}" >> $GITHUB_ENV
+#           echo "TF_VAR_tenant_id=${{ secrets.AZ_TENANT_ID }}" >> $GITHUB_ENV
 
-      - name: Terraform Init
-        run: terraform init
+#       - name: Terraform Init
+#         run: terraform init
 
-      - name: Terraform Plan with Debugging
-        # run: TF_LOG=INFO terraform plan -input=false
-        run: terraform plan
+#       - name: Terraform Plan with Debugging
+#         # run: TF_LOG=INFO terraform plan -input=false
+#         run: terraform plan
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+#       - name: Terraform Apply
+#         run: terraform apply -auto-approve
 
-      - name: Get VM Public IP
-        id: ip
-        run: |
-          echo "The public IP is $(terraform output locust_master_public_ip)"
-          echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
-          echo "LOCUST_WORKER_IP=$(terraform output locust_worker_public_ip | tr -d '"')">>$GITHUB_OUTPUT
-          echo "LOCUST_MASTER_PRIVATE_IP=$(terraform output locust_master_private_ip | tr -d '"')">>$GITHUB_OUTPUT
+#       - name: Get VM Public IP
+#         id: ip
+#         run: |
+#           echo "The public IP is $(terraform output locust_master_public_ip)"
+#           echo "LOCUST_MASTER_IP=$(terraform output locust_master_public_ip | tr -d '"')">>$GITHUB_OUTPUT
+#           echo "LOCUST_WORKER_IP=$(terraform output locust_worker_public_ip | tr -d '"')">>$GITHUB_OUTPUT
+#           echo "LOCUST_MASTER_PRIVATE_IP=$(terraform output locust_master_private_ip | tr -d '"')">>$GITHUB_OUTPUT
 
-  # setup-locust-master:
-  #   needs: deploy-infra
-  #   runs-on: ubuntu-latest
+# setup-locust-master:
+#   needs: deploy-infra
+#   runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Get master public ip
-  #       run: |
-  #         echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
-  #     - name: Deploy Locust Master
-  #       uses: appleboy/ssh-action@v0.1.7
-  #       with:
-  #         host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
-  #         username: bitnami # or ec2-user for Amazon Linux
-  #         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-  #         script: |
-  #           sudo su
-  #           sudo apt update -y
-  #           sudo apt install -y python3-pip git pipx
-  #           pipx install locust
-  #           export PATH=$HOME/.local/bin:$PATH
-  #           sudo iptables -A INPUT -p tcp --dport 5557 -j ACCEPT
-  #           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-  #           cd ~/locust_test_framework/
-  #           nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
+#   steps:
+#     - name: Get master public ip
+#       run: |
+#         echo "Locust Master Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}"
+#     - name: Deploy Locust Master
+#       uses: appleboy/ssh-action@v0.1.7
+#       with:
+#         host: ${{ needs.deploy-infra.outputs.LOCUST_MASTER_IP }}
+#         username: bitnami # or ec2-user for Amazon Linux
+#         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#         script: |
+#           sudo su
+#           sudo apt update -y
+#           sudo apt install -y python3-pip git pipx
+#           pipx install locust
+#           export PATH=$HOME/.local/bin:$PATH
+#           sudo iptables -A INPUT -p tcp --dport 5557 -j ACCEPT
+#           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+#           cd ~/locust_test_framework/
+#           nohup locust -f api_test.py --master --headless --expect-workers 1 -u 2 -r 1 -t 30s --html reports/master.html
 
-  # setup-locust-worker:
-  #   needs: deploy-infra
-  #   runs-on: ubuntu-latest
+# setup-locust-worker:
+#   needs: deploy-infra
+#   runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Get worker public ip
-  #       run: |
-  #         echo "Locust Worker Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}"
-  #     - name: Deploy Locust Worker
-  #       uses: appleboy/ssh-action@v0.1.7
-  #       with:
-  #         host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
-  #         username: bitnami
-  #         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-  #         script: |
-  #           sudo apt update -y
-  #           sudo apt install -y python3-pip git pipx
-  #           pipx install locust
-  #           export PATH=$HOME/.local/bin:$PATH
-  #           ulimit -n 100000
-  #           export locust_master_private_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_PRIVATE_IP }}
-  #           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
-  #           cd ~/locust_test_framework/
-  #           for i in {1..10}; do
-  #             if curl --silent --fail http://$locust_master_private_ip:5557; then
-  #               echo "Locust Master is up!"
-  #               break
-  #             fi
-  #             echo "Waiting for Locust Master to be available..."
-  #             sleep 5
-  #           done
-  #           nohup locust -f api_test.py --worker --master-host $locust_master_private_ip
+#   steps:
+#     - name: Get worker public ip
+#       run: |
+#         echo "Locust Worker Public Ip is: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}"
+#     - name: Deploy Locust Worker
+#       uses: appleboy/ssh-action@v0.1.7
+#       with:
+#         host: ${{ needs.deploy-infra.outputs.LOCUST_WORKER_IP }}
+#         username: bitnami
+#         key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+#         script: |
+#           sudo apt update -y
+#           sudo apt install -y python3-pip git pipx
+#           pipx install locust
+#           export PATH=$HOME/.local/bin:$PATH
+#           ulimit -n 100000
+#           export locust_master_private_ip=${{ needs.deploy-infra.outputs.LOCUST_MASTER_PRIVATE_IP }}
+#           git clone https://github.com/Ayon2016/locust_test_framework.git ~/locust_test_framework
+#           cd ~/locust_test_framework/
+#           for i in {1..10}; do
+#             if curl --silent --fail http://$locust_master_private_ip:5557; then
+#               echo "Locust Master is up!"
+#               break
+#             fi
+#             echo "Waiting for Locust Master to be available..."
+#             sleep 5
+#           done
+#           nohup locust -f api_test.py --worker --master-host $locust_master_private_ip
 
-  # cleanup:
-  #   needs: setup-locust-worker
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     AZ_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
-  #     AZ_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
-  #     AZ_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
-  #     AZ_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
-  #   if: always() # Ensures Terraform destroy runs even if previous steps fail
+cleanup:
+  needs: setup-locust-worker
+  runs-on: ubuntu-latest
+  env:
+    ARM_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
+    ARM_CLIENT_ID: ${{ secrets.AZ_CLIENT_ID }}
+    ARM_CLIENT_SECRET: ${{ secrets.AZ_CLIENT_SECRET }}
+    ARM_TENANT_ID: ${{ secrets.AZ_TENANT_ID }}
+  if: always() # Ensures Terraform destroy runs even if previous steps fail
 
-  #   steps:
-  #     - name: Set Environment Variables for Terraform
-  #       run: |
-  #         echo "TF_VAR_subscription_id=${{ secrets.AZ_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-  #         echo "TF_VAR_aws_client_id=${{ secrets.AZ_CLIENT_ID }}" >> $GITHUB_ENV
-  #         echo "TF_VAR_client_secret=${{ secrets.AZ_CLIENT_SECRET }}" >> $GITHUB_ENV
-  #         echo "TF_VAR_tenant_id=${{ secrets.AZ_TENANT_ID }}" >> $GITHUB_ENV
+  steps:
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Checkout Terraform Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: Ayon2016/Tfcode_TSC_POC_AZ
+    - name: Set Environment Variables for Terraform
+      run: |
+        echo "TF_VAR_subscription_id=${{ secrets.AZ_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+        echo "TF_VAR_aws_client_id=${{ secrets.AZ_CLIENT_ID }}" >> $GITHUB_ENV
+        echo "TF_VAR_client_secret=${{ secrets.AZ_CLIENT_SECRET }}" >> $GITHUB_ENV
+        echo "TF_VAR_tenant_id=${{ secrets.AZ_TENANT_ID }}" >> $GITHUB_ENV
 
-  #     - name: Install Terraform
-  #       uses: hashicorp/setup-terraform@v2
+    - name: Checkout Terraform Repo
+      uses: actions/checkout@v3
+      with:
+        repository: Ayon2016/Tfcode_TSC_POC_AZ
 
-  #     - name: Terraform Init
-  #       run: terraform init
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v2
 
-  #     - name: Terraform Plan Destroy
-  #       run: terraform plan -destroy
+    - name: Terraform Init
+      run: terraform init
 
-  #     - name: Terraform Destroy
-  #       run: terraform destroy -auto-approve
+    - name: Terraform Plan Destroy
+      run: terraform plan -destroy
+
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve
