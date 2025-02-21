@@ -17,5 +17,6 @@ async def create_item(item: Item):
 
 # Run the FastAPI app
 if __name__ == "__main__":
+    # runner
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
